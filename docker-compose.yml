@@ -6,24 +6,43 @@ services:
             dockerfile: docker/php.dockerfile
         image: jez500/pricebuddy:latest
         ports:
-            - 8080:80
+            - 18780:80
         volumes:
-            - storage:/app/storage
+            - ${pricebuddy_data}/app/storage:/app/storage
             - ./.env:/app/.env
         environment:
             DB_HOST: database                       # Name of the database service
             DB_USERNAME: pricebuddy                 # Should match the MYSQL_USER in the database service
             DB_PASSWORD: pric3buddy                 # Should match the MYSQL_PASSWORD in the database service
             DB_DATABASE: pricebuddy                 # Should match the MYSQL_DATABASE in the database service
-            APP_USER_EMAIL: admin@example.com       # Only used for seeding the database
-            APP_USER_PASSWORD: admin                # Only used for seeding the database
+            APP_USER_EMAIL: ${pricebuddy_useremail}      # Only used for seeding the database
+            APP_USER_PASSWORD: ${pricebuddy_password}                # Only used for seeding the database
             SCRAPER_BASE_URL: http://scraper:3000   # Url to Name of the scrapper service
             AFFILIATE_ENABLED: 'true'               # See https://pricebuddy.jez.me/support-project.html
         depends_on:
             database:
                 condition: service_healthy
+        labels:
+           
+            - "traefik.enable=true"
+            - "traefik.docker.network=internal_network"
+            # https
+            - "traefik.http.routers.pricebuddy-secure.tls=true"
+            - "traefik.http.routers.pricebuddy-secure.entrypoints=websecure"
+            - "traefik.http.routers.pricebuddy-secure.rule=Host(`pricebuddy.${domain}`)"
+            - "traefik.http.services.pricebuddy-secure.loadbalancer.server.port=80"
+            # wildcard certs
+            - "traefik.http.routers.pricebuddy-secure.tls.certresolver=letencrypt"
+            - "traefik.http.routers.pricebuddy-secure.tls.domains[0].main=${domain}"
+            - "traefik.http.routers.pricebuddy-secure.tls.domains[0].sans=*.${domain}"
+
+            
+            - homepage.group=Services
+            - homepage.name=pricebuddy
+            - homepage.href=https://pricebuddy.${domain}/
         networks:
-            - default
+            - internal_network
+        restart: unless-stopped
 
     database:
         image: mysql:8.2
@@ -33,26 +52,26 @@ services:
             MYSQL_PASSWORD: pric3buddy
             MYSQL_ROOT_PASSWORD: root
         volumes:
-            - database:/var/lib/mysql
+            - ${pricebuddy_data}/mysql:/var/lib/mysql
         networks:
-            - default
+            - internal_network
         healthcheck:
             test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
             interval: 10s
             timeout: 5s
             retries: 5
             start_period: 1m
+        restart: unless-stopped
 
     scraper:
         image: jez500/seleniumbase-scrapper:latest
         networks:
-            - default
+            - internal_network
         ports:
             - 3030:3000 # Optional, if you want to access the scrapper api from the host machine
-
-volumes:
-    storage:
-    database:
+        restart: unless-stopped
+    
 
 networks:
-    default:
+  internal_network:
+    name: internal_network
