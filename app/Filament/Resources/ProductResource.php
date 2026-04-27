@@ -79,6 +79,13 @@ class ProductResource extends Resource
             ->hintIcon(Icons::Help->value, 'The domain of the URL must be in the list of available stores')
             ->rules([new StoreUrl]);
 
+        $components[] = TextInput::make('price_factor')
+            ->label(__('Price Factor'))
+            ->numeric()
+            ->default(1)
+            ->minValue(0.01)
+            ->helperText(__('Number of items (unit price = price / factor)'));
+
         $components[] = Forms\Components\Toggle::make('create_store')
             ->label('Create store if it doesn\'t exist')
             ->hintIcon(Icons::Help->value, 'Attempt to create automatically create a store. Does not always work')
@@ -101,6 +108,12 @@ class ProductResource extends Resource
                 TextInput::make('image')
                     ->label('Image Url')
                     ->hintIcon(Icons::Help->value, 'The Image URL of the product'),
+
+                TextInput::make('unit_of_measure')
+                    ->label('Sold as')
+                    ->placeholder('e.g. tablets, bags, 100g')
+                    ->maxLength(50)
+                    ->hintIcon(Icons::Help->value, 'Displayed after the price factor, e.g. (2 tablets)'),
 
                 Forms\Components\Select::make('status')
                     ->options(Statuses::class)
@@ -191,7 +204,10 @@ class ProductResource extends Resource
                         Tables\Columns\ImageColumn::make('primary_image')
                             ->width(60)
                             ->height(60)
-                            ->extraImgAttributes(['class' => 'rounded-md p-1 bg-white mr-2'])
+                            ->extraImgAttributes([
+                                'class' => 'rounded-md p-1 bg-white mr-2',
+                                'onerror' => "this.onerror=null;this.src='/images/placeholder.png';",
+                            ])
                             ->label('Image')
                             ->url(fn ($record): string => $record->action_urls['view'])
                             ->grow(false),

@@ -40,9 +40,19 @@
 
                     <x-filament::icon :icon="$cache->getTrendIcon()" class="w-4 {{ $color }}"/>
 
-                    <div class="hover:underline {{ $color }}" @if ($idx > 0) style="{{ Filament\Support\get_color_css_variables(Color::Gray, shades: [300, 500, 400, 600, 800]) }}" @endif>
-                        <strong class="text-[1.2em] font-bold">{{ $cache->getPriceFormatted() }}</strong>
-                        ({{ $cache->getStoreName() }})
+                    <div class="{{ $color }}" @if ($idx > 0) style="{{ Filament\Support\get_color_css_variables(Color::Gray, shades: [300, 500, 400, 600, 800]) }}" @endif>
+                        <strong class="text-[1.2em] font-bold">
+                            {{ $cache->hasVisiblePrice() ? $cache->getUnitPriceFormatted() : __('Unavailable') }}
+                        </strong>
+                        @if ($cache->hasVisiblePrice() && $cache->hasPriceFactor())
+                            <span class="text-xs text-inherit">
+                                (<x-price-factor-price :cache="$cache" />)
+                            </span>
+                        @endif
+                        {{ '@'.$cache->getStoreName() }}
+                        @if ($cache->isUnavailable())
+                            <span style="{{ Filament\Support\get_color_css_variables($cache->getStockStatusColor(), shades: [50, 400, 500]) }}" class="text-xs text-custom-500 dark:text-custom-400 bg-custom-50 dark:bg-custom-400/10 font-medium ml-1 rounded-md p-1">{{ __($cache->getStockStatusLabel()) }}</span>
+                        @endif
                     </div>
 
                 </a>
@@ -51,4 +61,3 @@
         @endforeach
     </ul>
 @endif
-

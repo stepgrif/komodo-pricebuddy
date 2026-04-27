@@ -50,7 +50,13 @@ database/*.sqlite
 /scratch
 
 # AI
-.junie/mcp/mcp.json
-.junie/guidelines.local.md
+.junie
+.ai/mcp
+.claude
+.agents
+.mcp.json
+.codex
+AGENTS.md
+CLAUDE.md
 .output.txt
 .ai/mcp
